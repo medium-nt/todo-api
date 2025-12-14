@@ -1,0 +1,305 @@
+openapi: 3.0.3
+info:
+  title: Todo API App
+  description: RESTful API для управления задачами (To-Do List)
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@todoapi.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000/api
+    description: Локальный сервер разработки
+
+paths:
+  /tasks:
+    get:
+      summary: Получить список всех задач
+      description: Возвращает массив всех задач из базы данных
+      tags:
+        - Tasks
+      responses:
+        '200':
+          description: Успешное получение списка задач
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+              example:
+                - id: 1
+                  title: "Купить продукты"
+                  description: "Молоко, хлеб, яйца"
+                  status: "new"
+                  created_at: "2024-01-15T10:30:00.000000Z"
+                  updated_at: "2024-01-15T10:30:00.000000Z"
+                - id: 2
+                  title: "Сделать домашнее задание"
+                  description: "Математика, глава 5"
+                  status: "in_progress"
+                  created_at: "2024-01-15T11:00:00.000000Z"
+                  updated_at: "2024-01-15T12:00:00.000000Z"
+
+    post:
+      summary: Создать новую задачу
+      description: Создает новую задачу в базе данных
+      tags:
+        - Tasks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+            example:
+              title: "Новая задача"
+              description: "Описание новой задачи"
+              status: "new"
+      responses:
+        '201':
+          description: Задача успешно создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+              example:
+                id: 3
+                title: "Новая задача"
+                description: "Описание новой задачи"
+                status: "new"
+                created_at: "2024-01-15T13:00:00.000000Z"
+                updated_at: "2024-01-15T13:00:00.000000Z"
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /tasks/{id}:
+    get:
+      summary: Получить задачу по ID
+      description: Возвращает одну задачу по её идентификатору
+      tags:
+        - Tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID задачи
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+      responses:
+        '200':
+          description: Задача найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+              example:
+                id: 1
+                title: "Купить продукты"
+                description: "Молоко, хлеб, яйца"
+                status: "completed"
+                created_at: "2024-01-15T10:30:00.000000Z"
+                updated_at: "2024-01-15T15:30:00.000000Z"
+        '404':
+          description: Задача не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+
+    put:
+      summary: Обновить задачу
+      description: Обновляет существующую задачу по ID
+      tags:
+        - Tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID задачи
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+            example:
+              title: "Обновленное название"
+              description: "Обновленное описание"
+              status: "completed"
+      responses:
+        '200':
+          description: Задача успешно обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+              example:
+                id: 1
+                title: "Обновленное название"
+                description: "Обновленное описание"
+                status: "completed"
+                created_at: "2024-01-15T10:30:00.000000Z"
+                updated_at: "2024-01-15T16:00:00.000000Z"
+        '404':
+          description: Задача не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+    delete:
+      summary: Удалить задачу
+      description: Удаляет задачу по ID
+      tags:
+        - Tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID задачи
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+      responses:
+        '204':
+          description: Задача успешно удалена
+          content: {}
+        '404':
+          description: Задача не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+
+components:
+  schemas:
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Уникальный идентификатор задачи
+          example: 1
+          readOnly: true
+        title:
+          type: string
+          description: Название задачи
+          maxLength: 255
+          example: "Купить продукты"
+        description:
+          type: string
+          nullable: true
+          description: Описание задачи
+          example: "Молоко, хлеб, яйца"
+        status:
+          type: string
+          nullable: true
+          description: Статус задачи
+          enum: [new, in_progress, completed]
+          example: "new"
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания
+          example: "2024-01-15T10:30:00.000000Z"
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          description: Дата обновления
+          example: "2024-01-15T10:30:00.000000Z"
+          readOnly: true
+      required:
+        - id
+        - title
+        - created_at
+        - updated_at
+
+    CreateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Название задачи
+          maxLength: 255
+          example: "Новая задача"
+        description:
+          type: string
+          nullable: true
+          description: Описание задачи
+          example: "Описание новой задачи"
+        status:
+          type: string
+          nullable: true
+          description: Статус задачи
+          enum: [new, in_progress, completed]
+          example: "new"
+      required:
+        - title
+
+    UpdateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Название задачи
+          maxLength: 255
+          example: "Обновленное название"
+        description:
+          type: string
+          nullable: true
+          description: Описание задачи
+          example: "Обновленное описание"
+        status:
+          type: string
+          nullable: true
+          description: Статус задачи
+          enum: [new, in_progress, completed]
+          example: "completed"
+
+    ValidationError:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Общее сообщение об ошибке
+          example: "The given data was invalid."
+        errors:
+          type: object
+          description: Детализация ошибок по полям
+          example:
+            title: ["Поле title обязательно."]
+            status: ["Недопустимый статус! разрешено использовать только: new, in_progress и completed."]
+
+    NotFound:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Сообщение об ошибке
+          example: "Not found"
+
+tags:
+  - name: Tasks
+    description: Операции с задачами
