@@ -5,15 +5,21 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
 use App\Models\Task;
+use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Task::all());
+        $perPage = $request->get('per_page', 10);
+        $perPage = min($perPage, 100);
+
+        $tasks = Task::paginate($perPage);
+
+        return response()->json($tasks);
     }
 
     /**
